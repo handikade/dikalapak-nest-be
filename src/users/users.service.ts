@@ -1,9 +1,16 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
+import * as bcrypt from 'bcrypt';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User, UserDocument } from './schemas/user.schema';
+
+const SALT_ROUNDS = 10;
 
 @Injectable()
 export class UsersService {
@@ -13,12 +20,27 @@ export class UsersService {
   ) {}
 
   async create(createUserDto: CreateUserDto): Promise<UserDocument> {
-    const createdUser = new this.userModel({
-      ...createUserDto,
-      createdAt: new Date(),
-    });
+    const { password, ...rest } = createUserDto;
 
-    return createdUser.save();
+    try {
+      const salt = await bcrypt.genSalt(SALT_ROUNDS);
+      const passwordHash = await bcrypt.hash(password, salt);
+
+      const createdUser = new this.userModel({
+        ...rest,
+        passwordHash,
+        createdAt: new Date(),
+      });
+
+      return createdUser.save();
+    } catch (error: unknown) {
+      // ✅ Proper narrowing to satisfy @typescript-eslint/no-unsafe-*
+      if (error instanceof Error) {
+        // Optionally log err.stack here
+        throw new InternalServerErrorException(error.message);
+      }
+      throw new InternalServerErrorException('Failed to create user');
+    }
   }
 
   findAll(): Promise<UserDocument[]> {
@@ -39,12 +61,20 @@ export class UsersService {
     id: string,
     updateUserDto: UpdateUserDto,
   ): Promise<UserDocument> {
+    const { password, ...rest } = updateUserDto;
+    const updateData: Partial<User> = {
+      ...rest,
+      updatedAt: new Date(),
+    };
+
+    if (password) {
+      const salt = await bcrypt.genSalt(SALT_ROUNDS);
+      const passwordHash: string = await bcrypt.hash(password, salt);
+      updateData.passwordHash = passwordHash;
+    }
+
     const updatedUser = await this.userModel
-      .findByIdAndUpdate(
-        id,
-        { ...updateUserDto, updatedAt: new Date() },
-        { new: true },
-      )
+      .findByIdAndUpdate(id, updateData, { new: true })
       .exec();
 
     if (!updatedUser) {
