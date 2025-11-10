@@ -48,8 +48,7 @@ export function extractSchemaErrors(details: unknown): string[] | undefined {
         for (const detail of propertyDetails) {
           if (detail && typeof detail === 'object') {
             const reason = (detail as { reason?: string }).reason;
-            const operator = (detail as { operatorName?: string })
-              .operatorName;
+            const operator = (detail as { operatorName?: string }).operatorName;
 
             if (reason) {
               messages.push(`${name}: ${reason}`);
