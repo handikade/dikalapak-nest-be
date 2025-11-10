@@ -4,7 +4,6 @@ import {
   IsArray,
   IsBoolean,
   IsInt,
-  IsMongoId,
   IsNotEmpty,
   IsNumber,
   IsOptional,
@@ -57,9 +56,6 @@ export class CreateProductDto {
   @IsString({ each: true })
   @ArrayUnique()
   tags?: string[];
-
-  @IsMongoId()
-  userId: string;
 
   @IsOptional()
   @IsBoolean()

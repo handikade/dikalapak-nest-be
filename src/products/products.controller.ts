@@ -6,11 +6,24 @@ import {
   Param,
   Patch,
   Post,
+  Req,
+  UseGuards,
 } from '@nestjs/common';
+import { Request } from 'express';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { ProductsService } from './products.service';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
+interface AuthenticatedRequest extends Request {
+  user: {
+    userId: string;
+    email: string;
+    roles: string[];
+  };
+}
+
+@UseGuards(JwtAuthGuard)
 @Controller('products')
 export class ProductsController {
   constructor(private readonly productsService: ProductsService) {}
@@ -19,11 +32,15 @@ export class ProductsController {
   Example:
   curl -X POST {{local_url}}/products \
     -H "Content-Type: application/json" \
-    -d '{"name":"Desk Lamp","price":45.5,"category":"lighting","userId":"<userId>"}'
+    -H "Authorization: Bearer <token>" \
+    -d '{"name":"Desk Lamp","price":45.5,"category":"lighting"}'
   */
   @Post()
-  create(@Body() createProductDto: CreateProductDto) {
-    return this.productsService.create(createProductDto);
+  create(
+    @Body() createProductDto: CreateProductDto,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    return this.productsService.create(req.user.userId, createProductDto);
   }
 
   /*
@@ -37,11 +54,12 @@ export class ProductsController {
 
   /*
   Example:
-  curl {{local_url}}/products/user/<userId>
+  curl {{local_url}}/products/me \
+    -H "Authorization: Bearer <token>"
   */
-  @Get('user/:userId')
-  findByUser(@Param('userId') userId: string) {
-    return this.productsService.findByUser(userId);
+  @Get('me')
+  findMine(@Req() req: AuthenticatedRequest) {
+    return this.productsService.findByUser(req.user.userId);
   }
 
   /*

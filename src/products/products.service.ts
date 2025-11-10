@@ -13,17 +13,17 @@ export class ProductsService {
     private readonly productModel: Model<ProductDocument>,
   ) {}
 
-  async create(createProductDto: CreateProductDto): Promise<ProductDocument> {
-    const { userId, ...rest } = createProductDto;
+  async create(
+    userId: string,
+    createProductDto: CreateProductDto,
+  ): Promise<ProductDocument> {
+    const { isActive, ...rest } = createProductDto;
 
     try {
       const createdProduct = new this.productModel({
         ...rest,
         userId: new Types.ObjectId(userId),
-        isActive:
-          createProductDto.isActive === undefined
-            ? true
-            : createProductDto.isActive,
+        isActive: isActive ?? true,
         createdAt: new Date(),
       });
 
@@ -57,12 +57,9 @@ export class ProductsService {
     id: string,
     updateProductDto: UpdateProductDto,
   ): Promise<ProductDocument> {
-    const { userId, ...rest } = updateProductDto;
-
     const updateData: Partial<Product> = {
-      ...rest,
+      ...updateProductDto,
       updatedAt: new Date(),
-      ...(userId ? { userId: new Types.ObjectId(userId) } : {}),
     };
 
     let updatedProduct: ProductDocument | null = null;
