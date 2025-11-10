@@ -3,10 +3,7 @@ import {
   InternalServerErrorException,
 } from '@nestjs/common';
 import { MongoServerError } from 'mongodb';
-import {
-  Error as MongooseError,
-  mongo as MongooseMongo,
-} from 'mongoose';
+import { Error as MongooseError, mongo as MongooseMongo } from 'mongoose';
 import { extractSchemaErrors } from './extract-schema-errors.util';
 
 export function handleValidationError(
@@ -15,6 +12,7 @@ export function handleValidationError(
   resourceLabel = 'resource',
 ): never {
   if (error instanceof MongooseError.ValidationError) {
+    console.log('I');
     const messages = Object.values(error.errors)
       .map((err) => err.message)
       .filter(Boolean);
@@ -23,11 +21,13 @@ export function handleValidationError(
   }
 
   if (error instanceof MongoServerError && error.code === 121) {
+    console.log('II');
     const details = extractSchemaErrors(error.errInfo?.details);
     throw new BadRequestException(details ?? 'Document failed validation');
   }
 
   if (error instanceof MongooseMongo.MongoServerError && error.code === 121) {
+    console.log('III');
     const details = extractSchemaErrors(
       (error as MongoServerError).errInfo?.details,
     );
@@ -35,8 +35,11 @@ export function handleValidationError(
   }
 
   if (error instanceof Error) {
+    console.log('IV');
     throw new InternalServerErrorException(error.message);
   }
 
-  throw new InternalServerErrorException(`Failed to ${action} ${resourceLabel}`);
+  throw new InternalServerErrorException(
+    `Failed to ${action} ${resourceLabel}`,
+  );
 }
