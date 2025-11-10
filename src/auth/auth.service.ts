@@ -30,6 +30,16 @@ export class AuthService {
     private readonly configService: ConfigService,
   ) {}
 
+  private getRefreshSecret(): string {
+    const refreshSecret = this.configService.get<string>('JWT_REFRESH_SECRET');
+
+    if (!refreshSecret) {
+      throw new Error('Missing JWT_REFRESH_SECRET environment variable');
+    }
+
+    return refreshSecret;
+  }
+
   private sanitizeUser(user: UserDocument): SanitizedUser {
     return {
       id: user._id.toHexString(),
@@ -62,11 +72,7 @@ export class AuthService {
       roles: user.roles,
     };
 
-    const refreshSecret = this.configService.get<string>('JWT_REFRESH_SECRET');
-
-    if (!refreshSecret) {
-      throw new Error('Missing JWT_REFRESH_SECRET environment variable');
-    }
+    const refreshSecret = this.getRefreshSecret();
 
     const refreshExpires =
       this.configService.get<TokenExpiry>('JWT_REFRESH_EXPIRES') ?? '7d';
@@ -90,5 +96,28 @@ export class AuthService {
       expiresIn: accessExpires,
       user,
     };
+  }
+
+  async refreshTokens(refreshToken: string): Promise<AuthTokens> {
+    const refreshSecret = this.getRefreshSecret();
+    let payload: JwtPayload;
+
+    try {
+      payload = await this.jwtService.verifyAsync<JwtPayload>(refreshToken, {
+        secret: refreshSecret,
+      });
+    } catch {
+      throw new UnauthorizedException('Invalid refresh token');
+    }
+
+    let user: UserDocument;
+    try {
+      user = await this.usersService.findOne(payload.sub);
+    } catch {
+      throw new UnauthorizedException('User no longer exists');
+    }
+
+    const sanitizedUser = this.sanitizeUser(user);
+    return this.login(sanitizedUser);
   }
 }
