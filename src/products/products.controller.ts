@@ -67,8 +67,8 @@ export class ProductsController {
   curl {{local_url}}/products/<productId>
   */
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.productsService.findOne(id);
+  findOne(@Param('id') id: string, @Req() req: AuthenticatedRequest) {
+    return this.productsService.findOne(id, req.user.userId);
   }
 
   /*
@@ -78,8 +78,12 @@ export class ProductsController {
     -d '{"price":49.99,"isActive":false}'
   */
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateProductDto: UpdateProductDto) {
-    return this.productsService.update(id, updateProductDto);
+  update(
+    @Param('id') id: string,
+    @Body() updateProductDto: UpdateProductDto,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    return this.productsService.update(id, req.user.userId, updateProductDto);
   }
 
   /*
@@ -87,7 +91,7 @@ export class ProductsController {
   curl -X DELETE {{local_url}}/products/<productId>
   */
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.productsService.remove(id);
+  remove(@Param('id') id: string, @Req() req: AuthenticatedRequest) {
+    return this.productsService.remove(id, req.user.userId);
   }
 }

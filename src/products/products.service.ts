@@ -43,8 +43,10 @@ export class ProductsService {
       .exec();
   }
 
-  async findOne(id: string): Promise<ProductDocument> {
-    const product = await this.productModel.findById(id).exec();
+  async findOne(id: string, userId: string): Promise<ProductDocument> {
+    const product = await this.productModel
+      .findOne({ _id: id, userId: new Types.ObjectId(userId) })
+      .exec();
 
     if (!product) {
       throw new NotFoundException(`Product with id ${id} not found`);
@@ -55,6 +57,7 @@ export class ProductsService {
 
   async update(
     id: string,
+    userId: string,
     updateProductDto: UpdateProductDto,
   ): Promise<ProductDocument> {
     const updateData: Partial<Product> = {
@@ -66,7 +69,11 @@ export class ProductsService {
 
     try {
       updatedProduct = await this.productModel
-        .findByIdAndUpdate(id, updateData, { new: true })
+        .findOneAndUpdate(
+          { _id: id, userId: new Types.ObjectId(userId) },
+          updateData,
+          { new: true },
+        )
         .exec();
     } catch (error: unknown) {
       handleValidationError(error, 'update', 'product');
@@ -79,8 +86,10 @@ export class ProductsService {
     return updatedProduct;
   }
 
-  async remove(id: string): Promise<void> {
-    const result = await this.productModel.findByIdAndDelete(id).exec();
+  async remove(id: string, userId: string): Promise<void> {
+    const result = await this.productModel
+      .findOneAndDelete({ _id: id, userId: new Types.ObjectId(userId) })
+      .exec();
 
     if (!result) {
       throw new NotFoundException(`Product with id ${id} not found`);
