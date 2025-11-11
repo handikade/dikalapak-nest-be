@@ -53,7 +53,9 @@ export class CatalogsService {
   }
 
   async findById(id: Types.ObjectId): Promise<CatalogDto> {
-    const product = await this.productModel.findById(id).exec();
+    const product = await this.productModel
+      .findOne({ _id: id, isActive: true })
+      .exec();
 
     if (!product) {
       throw new NotFoundException(`Product with id ${id.toString()} not found`);
