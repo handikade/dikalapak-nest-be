@@ -1,13 +1,20 @@
 import { Module } from '@nestjs/common';
-import { DatabaseModule } from './database/database.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { UsersModule } from './users/users.module';
-import { ProductsModule } from './products/products.module';
 import { AuthModule } from './auth/auth.module';
+import { CatalogsModule } from './catalogs/catalogs.module';
+import { DatabaseModule } from './database/database.module';
+import { ProductsModule } from './products/products.module';
+import { UsersModule } from './users/users.module';
 
 @Module({
-  imports: [DatabaseModule, UsersModule, ProductsModule, AuthModule],
+  imports: [
+    DatabaseModule,
+    UsersModule,
+    ProductsModule,
+    AuthModule,
+    CatalogsModule,
+  ],
   controllers: [AppController],
   providers: [AppService],
 })
