@@ -2,7 +2,7 @@ import { Controller, Get, Param, Query } from '@nestjs/common';
 import { Types } from 'mongoose';
 import { ParseObjectPipe } from '../common/pipes/parse-object-id.pipe';
 import { CatalogsService } from './catalogs.service';
-import { CatalogPaginationDto } from './dto/catalog-pagination.dto';
+import { CatalogListQueryDto } from './dto/catalog-list-query.dto';
 
 @Controller('catalogs')
 export class CatalogsController {
@@ -13,8 +13,8 @@ export class CatalogsController {
   curl {{local_url}}/catalogs
   */
   @Get()
-  findAll(@Query() pagination: CatalogPaginationDto) {
-    return this.catalogsService.findAll(pagination);
+  findAll(@Query() q: CatalogListQueryDto) {
+    return this.catalogsService.findAll(q);
   }
 
   /*
